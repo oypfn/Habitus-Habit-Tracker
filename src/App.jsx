@@ -8,7 +8,22 @@ const initialNotes = [];
 
 const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-function normalizeHabits(items) { return Array.isArray(items) ? items.filter(h => h && (typeof h.id === 'string' || typeof h.id === 'number') && typeof h.name === 'string').map(h => ({ ...h, createdAt: h.createdAt || toDateKey(), completions: Array.isArray(h.completions) ? h.completions.filter(value => typeof value === 'string') : [] })) : seedHabits.map(h => ({ ...h, createdAt: toDateKey(), completions: [] })); }
+function normalizeHabits(items) {
+  if (!Array.isArray(items)) return seedHabits;
+  return items.filter(h => h && (typeof h.id === 'string' || typeof h.id === 'number') && typeof h.name === 'string' && h.name.trim()).map(h => ({
+    id: h.id, name: h.name.trim().slice(0, 48),
+    category: typeof h.category === 'string' ? h.category : 'Personal',
+    icon: typeof h.icon === 'string' ? h.icon : '🌱',
+    color: typeof h.color === 'string' ? h.color : '#d8e8d9',
+    goal: typeof h.goal === 'string' ? h.goal : 'Daily',
+    createdAt: typeof h.createdAt === 'string' && /^\\d{4}-\\d{2}-\\d{2}$/.test(h.createdAt) ? h.createdAt : toDateKey(),
+    completions: [...new Set(Array.isArray(h.completions) ? h.completions.filter(value => typeof value === 'string' && /^\\d{4}-\\d{2}-\\d{2}$/.test(value)) : [])].sort()
+  }));
+}
+function normalizeNotes(items) {
+  if (!Array.isArray(items)) return initialNotes;
+  return items.filter(note => note && (typeof note.id === 'string' || typeof note.id === 'number') && typeof note.title === 'string').map(note => ({ id: note.id, title: note.title.slice(0, 140), time: typeof note.time === 'string' ? note.time : '', body: typeof note.body === 'string' ? note.body : '' }));
+}
 
 function readSaved() {
   try { const value = localStorage.getItem('habitus-data'); return value ? JSON.parse(value) : null; } catch { return null; }
@@ -17,7 +32,7 @@ function readSaved() {
 export default function App() {
   const saved = useMemo(() => readSaved(), []);
   const [habits, setHabits] = useState(() => normalizeHabits(saved?.habits));
-  const [notes, setNotes] = useState(saved?.notes || initialNotes);
+  const [notes, setNotes] = useState(() => normalizeNotes(saved?.notes));
   const [active, setActive] = useState('Today');
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState('');
@@ -26,7 +41,11 @@ export default function App() {
   const [noteText, setNoteText] = useState('');
   const [showNote, setShowNote] = useState(false);
 
-  useEffect(() => { localStorage.setItem('habitus-data', JSON.stringify({ habits, notes })); }, [habits, notes]);
+  const [storageWarning, setStorageWarning] = useState(false);
+  useEffect(() => {
+    try { localStorage.setItem('habitus-data', JSON.stringify({ habits, notes })); setStorageWarning(false); }
+    catch { setStorageWarning(true); }
+  }, [habits, notes]);
 
   const today = new Date();
   const todayKey = toDateKey(today);
@@ -44,13 +63,14 @@ export default function App() {
   function addHabit(e) {
     e.preventDefault();
     if (!newName.trim()) return;
-    setHabits(items => [...items, { id: Date.now(), name: newName.trim(), category: newCategory, icon: '🌱', color: '#d8e8d9', goal: 'Daily', createdAt: todayKey, completions: [] }]);
+    setHabits(items => [...items, { id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, name: newName.trim(), category: newCategory, icon: '🌱', color: '#d8e8d9', goal: 'Daily', createdAt: todayKey, completions: [] }]);
     setNewName(''); setShowAdd(false);
   }
+  function deleteHabit(id) { setHabits(items => items.filter(habit => habit.id !== id)); }
   function addNote(e) {
     e.preventDefault();
     if (!noteText.trim()) return;
-    setNotes(items => [{ id: Date.now(), title: noteText.trim(), time: 'Just now', body: 'A small reflection from today.' }, ...items]);
+    setNotes(items => [{ id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, title: noteText.trim(), time: new Date().toLocaleString(), body: '' }, ...items]);
     setNoteText(''); setShowNote(false);
   }
 
@@ -73,7 +93,7 @@ export default function App() {
 
     <main className="main-area">
       <header className="topbar"><div className="breadcrumb">Workspace <ChevronRight size={14}/> <strong>{active}</strong></div><div className="top-actions"><span className="date-chip"><CalendarDays size={15}/> {today.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</span><div className="avatar avatar-small">RA</div></div></header>
-      <div className="content-wrap">
+      <div className="content-wrap">{storageWarning&&<div className="storage-warning" role="alert">Your browser could not save changes. Export your data and check available browser storage.</div>}
         {active==='Today' && <>
           <section className="welcome-row"><div><div className="eyebrow">{today.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()}</div><h1>A good day to begin,<br/><em>one step at a time.</em></h1><p className="intro">Small steps, repeated daily, become remarkable things.</p></div><div className="welcome-art"><div className="sun-disc"/><span className="art-leaf leaf-one">✳</span><span className="art-leaf leaf-two">✳</span><span className="art-caption">MAKE ROOM<br/>FOR GROWTH</span></div></section>
           <section className="summary-grid">
@@ -91,9 +111,9 @@ export default function App() {
           </section>
           <section className="bottom-grid"><div className="bottom-card"><div className="bottom-title"><div><div className="eyebrow">A MOMENT TO REFLECT</div><h3>Make it count.</h3></div><button className="round-plus" onClick={()=>setShowNote(true)}><Plus size={17}/></button></div><p>Take a minute to notice what went well today. Progress is worth recognising.</p><button className="text-button" onClick={()=>setActive('Journal')}>Open your journal <ChevronRight size={14}/></button></div><div className="bottom-card focus-card"><div className="focus-symbol"><Target size={21}/></div><div><div className="eyebrow">TODAY'S REMINDER</div><h3>Focus on the process.</h3><p>You don't need a perfect day. Just show up for the next small thing.</p></div></div></section>
         </>}
-        {active==='Habits'&&<section className="subpage"><div className="eyebrow">YOUR ROUTINE</div><h1>All habits</h1><p className="intro">The little things that make up your days.</p><button className="primary-button page-add" onClick={()=>setShowAdd(true)}><Plus size={16}/> Add a habit</button><div className="habit-panel">{habits.map(h=><div className="habit-row" key={h.id}><div className="habit-name"><div className="habit-emoji" style={{background:h.color}}>{h.icon}</div><div><strong>{h.name}</strong><small>{h.category} · {h.goal}</small></div></div><span className="habit-status">{h.completions.includes(todayKey)?'Completed today':'Not completed yet'}</span><button className={h.done?'check-button checked':'check-button'} onClick={()=>toggleHabit(h.id)}>{h.done?<Check size={17}/>:null}</button></div>)}</div></section>}
+        {active==='Habits'&&<section className="subpage"><div className="eyebrow">YOUR ROUTINE</div><h1>All habits</h1><p className="intro">The little things that make up your days.</p><button className="primary-button page-add" onClick={()=>setShowAdd(true)}><Plus size={16}/> Add a habit</button><div className="habit-panel">{habits.map(h=><div className="habit-row" key={h.id}><div className="habit-name"><div className="habit-emoji" style={{background:h.color}}>{h.icon}</div><div><strong>{h.name}</strong><small>{h.category} · {h.goal}</small></div></div><span className="habit-status">{h.completions.includes(todayKey)?'Completed today':'Not completed yet'}</span><button className={h.completions.includes(todayKey)?'check-button checked':'check-button'} onClick={()=>toggleHabit(h.id)} aria-label={h.completions.includes(todayKey)?'Mark incomplete':'Mark complete'}>{h.completions.includes(todayKey)?<Check size={17}/>:null}</button><button className="text-button" onClick={()=>{if(window.confirm("Delete this habit and its check-in history?"))deleteHabit(h.id);}}>Delete</button></div>)}</div></section>}
         {active==='Insights'&&<section className="subpage"><div className="eyebrow">THE BIGGER PICTURE</div><h1>Your progress, <em>in perspective.</em></h1><p className="intro">A few numbers to help you see how far you've come.</p><div className="insight-grid"><div className="summary-card"><div className="card-kicker">COMPLETION RATE</div><div className="stat-number">{percent}<span>%</span></div><p className="stat-foot">Today's completion across all habits.</p></div><div className="summary-card"><div className="card-kicker">ACTIVE HABITS</div><div className="stat-number">{habits.length}</div><p className="stat-foot">Routines you're currently working on.</p></div><div className="summary-card"><div className="card-kicker">CURRENT STREAK</div><div className="stat-number">{streak}<span> days</span></div><p className="stat-foot">Keep showing up for yourself.</p></div></div><div className="habit-panel insight-bars"><h3>Weekly consistency</h3>{weekStats.map((day,i)=><div className="bar-line" key={day.date}><span>{weekDates[i].toLocaleDateString(undefined,{weekday:'short'})}</span><div><i style={{width:day.percent+'%'}}/></div><b>{day.total ? day.percent+'%' : '—'}</b></div>)}</div></section>}
-        {active==='Journal'&&<section className="subpage"><div className="eyebrow">YOUR THOUGHTS, YOUR SPACE</div><h1>The journal.</h1><p className="intro">A place to pause, reflect, and notice the little things.</p><button className="primary-button page-add" onClick={()=>setShowNote(true)}><Plus size={16}/> Add a reflection</button><div className="journal-list">{notes.map(n=><article className="journal-entry" key={n.id}><span className="journal-date">{n.time}</span><h3>{n.title}</h3><p>{n.body}</p></article>)}</div></section>}
+        {active==='Journal'&&<section className="subpage"><div className="eyebrow">YOUR THOUGHTS, YOUR SPACE</div><h1>The journal.</h1><p className="intro">A place to pause, reflect, and notice the little things.</p><button className="primary-button page-add" onClick={()=>setShowNote(true)}><Plus size={16}/> Add a reflection</button><div className="journal-list">{notes.map(n=><article className="journal-entry" key={n.id}><span className="journal-date">{n.time}</span><h3>{n.title}</h3>{n.body&&<p>{n.body}</p>}<button className="text-button" onClick={()=>{if(window.confirm("Delete this journal entry?"))setNotes(items=>items.filter(item=>item.id!==n.id));}}>Delete entry</button></article>)}{notes.length===0&&<div className="empty-state">No reflections yet. Add your first note when you are ready.</div>}</div></section>}
         {active==='Settings'&&<section className="subpage"><div className="eyebrow">PREFERENCES & DATA</div><h1>Settings.</h1><p className="intro">Manage the data stored in this browser.</p><div className="habit-panel" style={{padding:24,marginTop:24}}><h3>Data & privacy</h3><p className="intro">Your habits and journal entries are stored locally in this browser. They are not synced to an account or another device.</p><div style={{display:'flex',gap:12,flexWrap:'wrap',marginTop:20}}><button className="primary-button" onClick={()=>{const blob=new Blob([JSON.stringify({habits,notes,exportedAt:new Date().toISOString()},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='habitus-data.json';link.click();URL.revokeObjectURL(url);}}>Export my data</button><button className="text-button" onClick={()=>{if(window.confirm('Delete all habits and journal entries stored in this browser? This cannot be undone.')){setHabits([]);setNotes([]);}}}>Clear all data</button></div></div></section>}
         {active==='Help'&&<section className="subpage"><div className="eyebrow">SUPPORT</div><h1>Help & feedback.</h1><p className="intro">A quick guide to using Habitus.</p><div className="habit-panel" style={{padding:24,marginTop:24}}><h3>How does tracking work?</h3><p className="intro">Add a habit, then use its check button each day to record completion. Your streak and weekly consistency are calculated from those check-ins.</p><h3 style={{marginTop:24}}>Where is my data stored?</h3><p className="intro">This prototype stores data in your browser only. Clearing browser storage or switching devices can remove or hide your records. Export a backup from Settings.</p><h3 style={{marginTop:24}}>Is account sync available?</h3><p className="intro">Not in this version. There is no live account system or cloud backup yet.</p></div></section>}
       </div>
