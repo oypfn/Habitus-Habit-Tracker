@@ -41,10 +41,9 @@ export default function App() {
   const [noteText, setNoteText] = useState('');
   const [showNote, setShowNote] = useState(false);
 
-  const [storageWarning, setStorageWarning] = useState(false);
   useEffect(() => {
-    try { localStorage.setItem('habitus-data', JSON.stringify({ habits, notes })); setStorageWarning(false); }
-    catch { setStorageWarning(true); }
+    try { localStorage.setItem('habitus-data', JSON.stringify({ habits, notes })); }
+    catch (error) { console.error('Habitus could not persist local data:', error); }
   }, [habits, notes]);
 
   const today = new Date();
@@ -93,7 +92,7 @@ export default function App() {
 
     <main className="main-area">
       <header className="topbar"><div className="breadcrumb">Workspace <ChevronRight size={14}/> <strong>{active}</strong></div><div className="top-actions"><span className="date-chip"><CalendarDays size={15}/> {today.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</span><div className="avatar avatar-small">RA</div></div></header>
-      <div className="content-wrap">{storageWarning&&<div className="storage-warning" role="alert">Your browser could not save changes. Export your data and check available browser storage.</div>}
+      <div className="content-wrap">
         {active==='Today' && <>
           <section className="welcome-row"><div><div className="eyebrow">{today.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).toUpperCase()}</div><h1>A good day to begin,<br/><em>one step at a time.</em></h1><p className="intro">Small steps, repeated daily, become remarkable things.</p></div><div className="welcome-art"><div className="sun-disc"/><span className="art-leaf leaf-one">✳</span><span className="art-leaf leaf-two">✳</span><span className="art-caption">MAKE ROOM<br/>FOR GROWTH</span></div></section>
           <section className="summary-grid">
