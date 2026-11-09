@@ -81,7 +81,7 @@ export default function App() {
       <div className="profile-card"><div className="avatar">RA</div><div><strong>Your workspace</strong><small>Personal workspace</small></div><MoreHorizontal size={17}/></div>
       <div className="nav-label">MENU</div>
       <nav className="main-nav">
-        {[['Today',LayoutDashboard],['Habits',ListChecks],['Insights',TrendingUp],['Journal',CalendarDays]].map(([label,Icon]) => <button key={label} className={active===label?'nav-item selected':'nav-item'} onClick={()=>setActive(label)}><Icon size={17}/><span>{label}</span>{label==='Today'&&<span className="nav-count">{completed}/{habits.length}</span>}</button>)}
+        {[['Today',LayoutDashboard],['Habits',ListChecks],['Insights',TrendingUp],['Journal',CalendarDays],['Settings',Settings2]].map(([label,Icon]) => <button key={label} className={active===label?'nav-item selected':'nav-item'} onClick={()=>setActive(label)}><Icon size={17}/><span>{label}</span>{label==='Today'&&<span className="nav-count">{completed}/{habits.length}</span>}</button>)}
       </nav>
       <div className="sidebar-bottom">
         <div className="streak-card"><div className="streak-icon"><Flame size={19}/></div><div><strong>{streak} day streak</strong><small>You're building momentum</small></div></div>
