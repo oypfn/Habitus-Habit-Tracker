@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Activity, ArrowDownRight, ArrowUpRight, Bell, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Clock3, Flame, LayoutDashboard, ListChecks, MoreHorizontal, Plus, Search, Settings2, Sparkles, Target, TrendingUp, Trophy, X } from 'lucide-react';
+import { ArrowUpRight, Bell, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Flame, LayoutDashboard, ListChecks, MoreHorizontal, Plus, Search, Settings2, Target, TrendingUp, X } from 'lucide-react';
 import './App.css';
 
 const seedHabits = [
