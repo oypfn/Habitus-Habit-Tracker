@@ -3,18 +3,8 @@ import { ArrowUpRight, Bell, CalendarDays, Check, ChevronDown, ChevronLeft, Chev
 import './App.css';
 import { getCurrentStreak, getWeekDates, getWeeklyCompletion, toDateKey } from './lib/dateUtils';
 
-const seedHabits = [
-  { id: 1, name: 'Morning pages', category: 'Mindfulness', icon: '✍️', color: '#d9c9f5', goal: '10 min', done: true, week: [1,1,1,0,1,0,0] },
-  { id: 2, name: 'Read 20 pages', category: 'Learning', icon: '📚', color: '#f4d9a8', goal: '20 pages', done: true, week: [1,1,0,1,1,0,0] },
-  { id: 3, name: 'Move your body', category: 'Health', icon: '🏃', color: '#b9dfd1', goal: '30 min', done: false, week: [1,0,1,1,0,0,0] },
-  { id: 4, name: 'Drink 2L water', category: 'Health', icon: '💧', color: '#c6dff4', goal: '2 litres', done: false, week: [1,1,1,1,0,0,0] },
-  { id: 5, name: 'Study Spanish', category: 'Learning', icon: '🇪🇸', color: '#f2c7c2', goal: '25 min', done: true, week: [1,1,0,1,1,0,0] },
-];
-
-const initialNotes = [
-  { id: 1, title: 'A slower start is still a start.', time: 'Today · 8:15 AM', body: 'Kept the phone away for the first 20 minutes. It made the morning feel less rushed.' },
-  { id: 2, title: 'Consistency over intensity.', time: 'Yesterday · 9:40 PM', body: 'A short walk counts. No need to turn every day into a personal record.' },
-];
+const seedHabits = [];
+const initialNotes = [];
 
 const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
@@ -96,7 +86,7 @@ export default function App() {
             <div className="habit-toolbar"><div className="week-switch"><strong>This week</strong><span className="today-tag">TODAY</span></div><label className="search-box"><Search size={15}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Find a habit"/></label></div>
             <div className="habit-head"><span>HABIT</span><span>WEEKLY RHYTHM</span><span>TODAY</span></div>
             {visibleHabits.map(h=><div className="habit-row" key={h.id}><div className="habit-name"><div className="habit-emoji" style={{background:h.color}}>{h.icon}</div><div><strong>{h.name}</strong><small>{h.category} <span>·</span> {h.goal}</small></div></div><div className="week-cells">{weekDates.map(date=>{const done=h.completions.includes(toDateKey(date));return <div key={toDateKey(date)} className={'week-cell '+(done?'filled':'')+(toDateKey(date)===todayKey?' current':'')} title={date.toLocaleDateString()}>{done?<Check size={12}/>:<span/>}</div>})}</div><button className={h.completions.includes(todayKey)?'check-button checked':'check-button'} onClick={()=>toggleHabit(h.id)} aria-label={h.completions.includes(todayKey)?'Mark incomplete':'Mark complete'}>{h.completions.includes(todayKey)?<Check size={17}/>:<span/>}</button></div>)}
-            {visibleHabits.length===0&&<div className="empty-state">No habits match that search.</div>}
+            {visibleHabits.length===0&&<div className="empty-state">{query ? 'No habits match that search.' : 'You have not added any habits yet. Start with one small routine.'}</div>}
             <div className="panel-footer"><span><span className="legend-dot done-dot"/> Completed <span className="legend-dot empty-dot"/> Still to do</span><button className="text-button" onClick={()=>setActive('Habits')}>View all habits <ChevronRight size={14}/></button></div>
           </section>
           <section className="bottom-grid"><div className="bottom-card"><div className="bottom-title"><div><div className="eyebrow">A MOMENT TO REFLECT</div><h3>Make it count.</h3></div><button className="round-plus" onClick={()=>setShowNote(true)}><Plus size={17}/></button></div><p>Take a minute to notice what went well today. Progress is worth recognising.</p><button className="text-button" onClick={()=>setActive('Journal')}>Open your journal <ChevronRight size={14}/></button></div><div className="bottom-card focus-card"><div className="focus-symbol"><Target size={21}/></div><div><div className="eyebrow">TODAY'S REMINDER</div><h3>Focus on the process.</h3><p>You don't need a perfect day. Just show up for the next small thing.</p></div></div></section>
