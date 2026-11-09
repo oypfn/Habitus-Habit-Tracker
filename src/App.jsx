@@ -25,7 +25,7 @@ function readSaved() {
 }
 
 export default function App() {
-  const saved = useMemo(readSaved, []);
+  const saved = useMemo(() => readSaved(), []);
   const [habits, setHabits] = useState(() => normalizeHabits(saved?.habits));
   const [notes, setNotes] = useState(saved?.notes || initialNotes);
   const [active, setActive] = useState('Today');
@@ -95,7 +95,7 @@ export default function App() {
           <section className="habit-panel">
             <div className="habit-toolbar"><div className="week-switch"><strong>This week</strong><span className="today-tag">TODAY</span></div><label className="search-box"><Search size={15}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Find a habit"/></label></div>
             <div className="habit-head"><span>HABIT</span><span>WEEKLY RHYTHM</span><span>TODAY</span></div>
-            {visibleHabits.map(h=><div className="habit-row" key={h.id}><div className="habit-name"><div className="habit-emoji" style={{background:h.color}}>{h.icon}</div><div><strong>{h.name}</strong><small>{h.category} <span>·</span> {h.goal}</small></div></div><div className="week-cells">{weekDates.map((date,i)=>{const done=h.completions.includes(toDateKey(date));return <div key={toDateKey(date)} className={'week-cell '+(done?'filled':'')+(toDateKey(date)===todayKey?' current':'')} title={date.toLocaleDateString()}>{done?<Check size={12}/>:<span/>}</div>})}</div><button className={h.completions.includes(todayKey)?'check-button checked':'check-button'} onClick={()=>toggleHabit(h.id)} aria-label={h.done?'Mark incomplete':'Mark complete'}>{h.completions.includes(todayKey)?<Check size={17}/>:<span/>}</button></div>)}
+            {visibleHabits.map(h=><div className="habit-row" key={h.id}><div className="habit-name"><div className="habit-emoji" style={{background:h.color}}>{h.icon}</div><div><strong>{h.name}</strong><small>{h.category} <span>·</span> {h.goal}</small></div></div><div className="week-cells">{weekDates.map(date=>{const done=h.completions.includes(toDateKey(date));return <div key={toDateKey(date)} className={'week-cell '+(done?'filled':'')+(toDateKey(date)===todayKey?' current':'')} title={date.toLocaleDateString()}>{done?<Check size={12}/>:<span/>}</div>})}</div><button className={h.completions.includes(todayKey)?'check-button checked':'check-button'} onClick={()=>toggleHabit(h.id)} aria-label={h.completions.includes(todayKey)?'Mark incomplete':'Mark complete'}>{h.completions.includes(todayKey)?<Check size={17}/>:<span/>}</button></div>)}
             {visibleHabits.length===0&&<div className="empty-state">No habits match that search.</div>}
             <div className="panel-footer"><span><span className="legend-dot done-dot"/> Completed <span className="legend-dot empty-dot"/> Still to do</span><button className="text-button" onClick={()=>setActive('Habits')}>View all habits <ChevronRight size={14}/></button></div>
           </section>
